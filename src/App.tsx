@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaskCard, type TaskCardProps, type Status } from "./assets/components/card";
+import { EditModal } from "./assets/components/EditModal";
 import "./assets/components/card.css";
 import "./App.css";
 
-// ─── Sample data (dates relative to current time for visible demo) ─────────────
+// ─── Storage key ───────────────────────────────────────────────────────────────
+const LS_KEY = "hng-tasks-v1";
+
+// ─── Sample / seed data ────────────────────────────────────────────────────────
 const now = new Date();
 
 function daysFromNow(n: number) {
@@ -18,10 +22,12 @@ function hoursFromNow(h: number) {
   return d;
 }
 
-const INITIAL_TASKS: Omit<TaskCardProps, "onEdit" | "onDelete" | "onToggleComplete">[] = [
+type TaskData = Omit<TaskCardProps, "onEdit" | "onDelete" | "onToggleComplete">;
+
+const SEED_TASKS: TaskData[] = [
   {
     id: "task-1",
-    title: "Empty the trash",
+    title: "Empty T33 folders",
     description:
       "Clear out all the old files and temporary folders on the production server before the nightly backup window kicks in.",
     priority: "high",
@@ -35,7 +41,7 @@ const INITIAL_TASKS: Omit<TaskCardProps, "onEdit" | "onDelete" | "onToggleComple
     description:
       "Audit the existing colour palette, typography scale, and spacing system. Align with the new brand guidelines released last week.",
     priority: "medium",
-    dueDate: hoursFromNow(-2),   // overdue by 2 hours
+    dueDate: hoursFromNow(-2),
     status: "in-progress",
     tags: ["Design", "UI", "Brand"],
   },
@@ -61,17 +67,48 @@ const INITIAL_TASKS: Omit<TaskCardProps, "onEdit" | "onDelete" | "onToggleComple
   },
 ];
 
-// ─── App ──────────────────────────────────────────────────────────────────────
+// ─── localStorage helpers ──────────────────────────────────────────────────────
+function loadTasks(): TaskData[] {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return SEED_TASKS;
+    const parsed = JSON.parse(raw) as Array<Omit<TaskData, "dueDate"> & { dueDate: string }>;
+    // Rehydrate Date objects from ISO strings
+    return parsed.map((t) => ({ ...t, dueDate: new Date(t.dueDate) }));
+  } catch {
+    return SEED_TASKS;
+  }
+}
+
+function saveTasks(tasks: TaskData[]) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(tasks));
+  } catch {
+    // Storage quota exceeded — silently ignore
+  }
+}
+
+// ─── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<TaskData[]>(loadTasks);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Persist every time tasks change
+  useEffect(() => {
+    saveTasks(tasks);
+  }, [tasks]);
 
   function handleDelete(id: string) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
   function handleEdit(id: string) {
-    const t = tasks.find((x) => x.id === id);
-    if (t) alert(`✏️ Edit: "${t.title}"\n(wire up your edit modal here)`);
+    setEditingId(id);
+  }
+
+  function handleSave(updated: TaskData) {
+    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setEditingId(null);
   }
 
   function handleToggle(id: string, completed: boolean) {
@@ -84,67 +121,77 @@ export default function App() {
     );
   }
 
+  const editingTask = tasks.find((t) => t.id === editingId) ?? null;
+
   return (
-    <main className="app-main">
-      {/* ── Hero heading ── */}
-      <header className="app-header">
-        <div className="app-header__badge">Productivity OS</div>
-        <h1 className="app-header__title">
-          Task <span className="app-header__accent">Command</span> Center
-        </h1>
-        <p className="app-header__sub">
-          Stay in flow. Track what matters. Ship with clarity.
-        </p>
-      </header>
+    <>
+      <main className="app-main">
+        {/* ── Hero heading ── */}
+        <header className="app-header">
+          <div className="app-header__badge">ProcurioOS</div>
+          <h1 className="app-header__title">
+            Daily <span className="app-header__accent">Tasks</span> 
+          </h1>
+          <p className="app-header__sub">
+            Stay in flow. Track what matters. Ship with clarity.
+          </p>
+        </header>
 
-      {/* ── Stats row ── */}
-      <div className="app-stats" role="region" aria-label="Task statistics">
-        <div className="app-stat">
-          <span className="app-stat__num">{tasks.length}</span>
-          <span className="app-stat__label">Total</span>
-        </div>
-        <div className="app-stat">
-          <span className="app-stat__num">
-            {tasks.filter((t) => t.status === "in-progress").length}
-          </span>
-          <span className="app-stat__label">In Progress</span>
-        </div>
-        <div className="app-stat">
-          <span className="app-stat__num">
-            {tasks.filter((t) => t.status === "done").length}
-          </span>
-          <span className="app-stat__label">Done</span>
-        </div>
-        <div className="app-stat app-stat--urgent">
-          <span className="app-stat__num">
-            {tasks.filter((t) => t.priority === "urgent").length}
-          </span>
-          <span className="app-stat__label">Urgent</span>
-        </div>
-      </div>
-
-      {/* ── Cards grid ── */}
-      <section
-        className="app-grid"
-        aria-label="Task cards"
-      >
-        {tasks.length === 0 ? (
-          <div className="app-empty" role="status">
-            <span className="app-empty__icon">🎉</span>
-            <p>All caught up! No tasks remaining.</p>
+        {/* ── Stats row ── */}
+        <div className="app-stats" role="region" aria-label="Task statistics">
+          <div className="app-stat">
+            <span className="app-stat__num">{tasks.length}</span>
+            <span className="app-stat__label">Total</span>
           </div>
-        ) : (
-          tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              {...task}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onToggleComplete={handleToggle}
-            />
-          ))
-        )}
-      </section>
-    </main>
+          <div className="app-stat">
+            <span className="app-stat__num">
+              {tasks.filter((t) => t.status === "in-progress").length}
+            </span>
+            <span className="app-stat__label">In Progress</span>
+          </div>
+          <div className="app-stat">
+            <span className="app-stat__num">
+              {tasks.filter((t) => t.status === "done").length}
+            </span>
+            <span className="app-stat__label">Done</span>
+          </div>
+          <div className="app-stat app-stat--urgent">
+            <span className="app-stat__num">
+              {tasks.filter((t) => t.priority === "urgent").length}
+            </span>
+            <span className="app-stat__label">Urgent</span>
+          </div>
+        </div>
+
+        {/* ── Cards grid ── */}
+        <section className="app-grid" aria-label="Task cards">
+          {tasks.length === 0 ? (
+            <div className="app-empty" role="status">
+              <span className="app-empty__icon">🎉</span>
+              <p>All caught up! No tasks remaining.</p>
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                {...task}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleComplete={handleToggle}
+              />
+            ))
+          )}
+        </section>
+      </main>
+
+      {/* ── Edit modal (portal-style, rendered outside main) ── */}
+      {editingTask && (
+        <EditModal
+          task={editingTask}
+          onSave={handleSave}
+          onClose={() => setEditingId(null)}
+        />
+      )}
+    </>
   );
 }
