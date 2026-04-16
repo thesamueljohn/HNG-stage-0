@@ -1,35 +1,43 @@
-/* ─── App-level page styles — Monochrome Edition ────────────────────────────── */
+/* ─── App-level page styles ─────────────────────────────────────────────────── */
 
-/* ─── Main layout ────────────────────────────────────────────────────────── */
+/* Tokens are defined in card.css :root — reused here via the same vars */
+
 .app-main {
   min-height: 100vh;
-  background: #0c0c0e;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -5%, rgba(255,255,255,0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 85% 85%, rgba(255,255,255,0.03) 0%, transparent 50%);
+  background: var(--bg-page);
   padding: 60px 20px 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 40px;
   font-family: 'Inter', system-ui, sans-serif;
+  transition: background .3s ease;
+}
+
+/* Subtle top glow for dark, gentle shadow for light */
+@media (prefers-color-scheme: dark) {
+  .app-main {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -5%, rgba(255,255,255,0.04) 0%, transparent 60%);
+  }
+}
+@media (prefers-color-scheme: light) {
+  .app-main {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -5%, rgba(0,0,0,0.03) 0%, transparent 60%);
+  }
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────────── */
-.app-header {
-  text-align: center;
-  max-width: 600px;
-}
+.app-header { text-align: center; max-width: 600px; }
 
 .app-header__badge {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #a1a1aa;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid #3f3f46;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1.5px; 
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-mid);
   padding: 4px 14px;
   border-radius: 100px;
   margin-bottom: 18px;
@@ -38,66 +46,44 @@
 .app-header__title {
   font-size: clamp(32px, 5vw, 52px);
   font-weight: 700;
-  color: #f4f4f5;
+  color: var(--text-primary);
   letter-spacing: -1px;
   margin: 0 0 12px;
   line-height: 1.1;
 }
 
-/* Accent: white instead of a color */
-.app-header__accent {
-  color: #ffffff;
-  position: relative;
+.app-header__accent { color: var(--accent); }
+
+/* light: accent = near-black, so just use it directly */
+@media (prefers-color-scheme: light) {
+  .app-header__accent { color: var(--text-primary); }
 }
 
-.app-header__sub {
-  font-size: 16px;
-  color: #52525b;
-  margin: 0;
-  line-height: 1.6;
-}
+.app-header__sub { font-size: 16px; color: var(--text-muted); margin: 0; line-height: 1.6; }
 
 /* ─── Stats bar ──────────────────────────────────────────────────────────── */
 .app-stats {
   display: flex;
-  gap: 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid #27272a;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .app-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 28px;
-  gap: 2px;
-  border-right: 1px solid #27272a;
-  transition: background 0.2s ease;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 28px; gap: 2px;
+  border-right: 1px solid var(--border);
+  transition: background .2s ease;
 }
+.app-stat:last-child       { border-right: none; }
+.app-stat:hover            { background: var(--bg-subtle); }
 
-.app-stat:last-child { border-right: none; }
+.app-stat__num   { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+.app-stat__label { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: .3px; }
 
-.app-stat:hover { background: rgba(255, 255, 255, 0.04); }
-
-.app-stat__num {
-  font-size: 22px;
-  font-weight: 700;
-  color: #f4f4f5;
-  line-height: 1;
-}
-
-.app-stat__label {
-  font-size: 11px;
-  font-weight: 500;
-  color: #52525b;
-  letter-spacing: 0.3px;
-}
-
-/* "Urgent" stat: same white number, just slightly brighter label */
-.app-stat--urgent .app-stat__num  { color: #ffffff; }
-.app-stat--urgent .app-stat__label { color: #71717a; }
+.app-stat--urgent .app-stat__num { color: var(--text-secondary); font-weight: 800; }
 
 /* ─── Cards grid ─────────────────────────────────────────────────────────── */
 .app-grid {
@@ -109,30 +95,20 @@
 }
 
 /* ─── Empty state ────────────────────────────────────────────────────────── */
-.app-empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 60px 20px;
-  color: #3f3f46;
-}
-
+.app-empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-muted); }
 .app-empty__icon { font-size: 40px; display: block; margin-bottom: 12px; }
 .app-empty p     { font-size: 16px; font-weight: 500; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .app-stats {
-    flex-direction: column;
-    width: 100%;
-    max-width: 260px;
-  }
-  .app-stat {
+  .app-stats { flex-direction: column; width: 100%; max-width: 260px; }
+  .app-stat  {
     border-right: none;
-    border-bottom: 1px solid #27272a;
+    border-bottom: 1px solid var(--border);
     flex-direction: row;
     justify-content: space-between;
     padding: 12px 20px;
   }
   .app-stat:last-child { border-bottom: none; }
-  .app-grid { grid-template-columns: 1fr; }
+  .app-grid  { grid-template-columns: 1fr; }
 }

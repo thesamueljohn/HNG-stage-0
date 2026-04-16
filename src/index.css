@@ -1,9 +1,6 @@
-/* ─── Global reset & tokens ─────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* ─── Global reset ──────────────────────────────────────────────────────────── */
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 :root {
   font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -11,36 +8,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color-scheme: dark;
+  /* Let the browser adapt native UI (scrollbars, form controls, etc.) */
+  color-scheme: light dark;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  background: #0d0e18;
-  color: #e2e8f0;
-  min-height: 100vh;
-}
+body { margin: 0; padding: 0; min-height: 100vh; }
 
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+#root { min-height: 100vh; display: flex; flex-direction: column; }
 
-h1, h2, h3, h4, h5, h6 {
-  margin: 0;
-}
-
-p {
-  margin: 0;
-}
-
-ul, ol {
-  margin: 0;
-  padding: 0;
-}
-
-button {
-  cursor: pointer;
-}
+h1, h2, h3, h4, h5, h6 { margin: 0; }
+p  { margin: 0; }
+ul, ol { margin: 0; padding: 0; }
+button { cursor: pointer; }
