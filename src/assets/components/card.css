@@ -1,31 +1,31 @@
-/* ─── Task Card CSS ─────────────────────────────────────────────────────────── */
+/* ─── Task Card CSS — Monochrome Edition ────────────────────────────────────── */
 
-/* Google Font import */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ─── Design tokens ──────────────────────────────────────────────────────── */
+:root {
+  --mono-0:   #ffffff;
+  --mono-50:  #f4f4f5;
+  --mono-100: #e4e4e7;
+  --mono-200: #d4d4d8;
+  --mono-300: #a1a1aa;
+  --mono-400: #71717a;
+  --mono-500: #52525b;
+  --mono-600: #3f3f46;
+  --mono-700: #27272a;
+  --mono-800: #1c1c1f;
+  --mono-900: #141416;
+  --mono-950: #0c0c0e;
+}
 
 /* ─── Card container ─────────────────────────────────────────────────────── */
 .task-card {
-  --card-bg: #1a1b26;
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-hover-border: rgba(139, 92, 246, 0.4);
-  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
-  --card-hover-shadow: 0 8px 40px rgba(139, 92, 246, 0.2), 0 4px 16px rgba(0, 0, 0, 0.4);
-  --card-radius: 16px;
-
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-
-  --purple: #8b5cf6;
-  --purple-light: #a78bfa;
-  --purple-glow: rgba(139, 92, 246, 0.15);
-
   font-family: 'Inter', system-ui, sans-serif;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--card-radius);
+  background: var(--mono-800);
+  border: 1px solid var(--mono-700);
+  border-radius: 16px;
   padding: 20px 22px;
-  box-shadow: var(--card-shadow);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.35);
   width: 100%;
   max-width: 420px;
   min-width: 280px;
@@ -33,46 +33,39 @@
   overflow: hidden;
   transition:
     border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.2s ease;
+    box-shadow   0.25s ease,
+    transform    0.2s  ease;
   will-change: transform;
   box-sizing: border-box;
 }
 
-/* Top accent glow bar */
+/* Top accent line — white on hover */
 .task-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--purple), transparent);
+  background: linear-gradient(90deg, transparent, var(--mono-300), transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
-.task-card:hover::before {
-  opacity: 1;
-}
+.task-card:hover::before { opacity: 1; }
 
 .task-card:hover {
-  border-color: var(--card-hover-border);
-  box-shadow: var(--card-hover-shadow);
+  border-color: var(--mono-500);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.4);
   transform: translateY(-2px);
 }
 
-/* Completed state: desaturated */
-.task-card--completed {
-  opacity: 0.7;
-}
-
+/* Completed state */
+.task-card--completed { opacity: 0.6; }
 .task-card--completed .task-card__title {
   text-decoration: line-through;
-  color: var(--text-muted) !important;
+  color: var(--mono-500) !important;
 }
 
-/* ─── Header row ─────────────────────────────────────────────────────────── */
+/* ─── Header ─────────────────────────────────────────────────────────────── */
 .task-card__header {
   display: flex;
   align-items: center;
@@ -90,13 +83,13 @@
 .task-card__date-icon {
   display: flex;
   align-items: center;
-  color: var(--text-muted);
+  color: var(--mono-500);
 }
 
 .task-card__due-date {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--mono-400);
   letter-spacing: 0.2px;
 }
 
@@ -104,41 +97,44 @@
 .task-card__priority-badge {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.9px;
   text-transform: uppercase;
   padding: 3px 10px;
   border-radius: 100px;
   border: 1px solid;
 }
 
+/* All four levels: monochrome, differentiated by fill/border weight */
 .priority-low {
-  color: #6ee7b7;
-  background: rgba(110, 231, 183, 0.1);
-  border-color: rgba(110, 231, 183, 0.3);
+  color: var(--mono-300);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--mono-600);
 }
 
 .priority-medium {
-  color: #fcd34d;
-  background: rgba(252, 211, 77, 0.1);
-  border-color: rgba(252, 211, 77, 0.3);
+  color: var(--mono-100);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--mono-400);
 }
 
 .priority-high {
-  color: #fb923c;
-  background: rgba(251, 146, 60, 0.1);
-  border-color: rgba(251, 146, 60, 0.3);
+  color: var(--mono-50);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--mono-300);
+  font-weight: 700;
 }
 
 .priority-urgent {
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.12);
-  border-color: rgba(248, 113, 113, 0.4);
+  color: var(--mono-950);
+  background: var(--mono-0);
+  border-color: var(--mono-0);
+  font-weight: 700;
   animation: pulse-urgent 2s ease-in-out infinite;
 }
 
 @keyframes pulse-urgent {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.3); }
-  50%       { box-shadow: 0 0 0 5px rgba(248, 113, 113, 0); }
+  0%, 100% { box-shadow: 0 0 0 0   rgba(255, 255, 255, 0.35); }
+  50%       { box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);   }
 }
 
 /* ─── Title row ──────────────────────────────────────────────────────────── */
@@ -149,14 +145,14 @@
   margin-bottom: 10px;
 }
 
-/* Custom checkbox */
+/* Custom checkbox — monochrome */
 .task-card__checkbox {
   appearance: none;
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
   min-width: 18px;
-  border: 2px solid #475569;
+  border: 2px solid var(--mono-600);
   border-radius: 5px;
   cursor: pointer;
   margin-top: 3px;
@@ -167,38 +163,34 @@
 }
 
 .task-card__checkbox:hover {
-  border-color: var(--purple-light);
-  background: var(--purple-glow);
+  border-color: var(--mono-300);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .task-card__checkbox:checked {
-  background: var(--purple);
-  border-color: var(--purple);
+  background: var(--mono-0);
+  border-color: var(--mono-0);
 }
 
 .task-card__checkbox:checked::after {
   content: '';
   position: absolute;
-  left: 3px;
-  top: 0px;
-  width: 5px;
-  height: 9px;
-  border: 2px solid #fff;
-  border-top: none;
-  border-left: none;
+  left: 3px; top: 0;
+  width: 5px; height: 9px;
+  border: 2px solid var(--mono-950);
+  border-top: none; border-left: none;
   transform: rotate(45deg);
 }
 
 .task-card__checkbox:focus-visible {
-  outline: 2px solid var(--purple-light);
+  outline: 2px solid var(--mono-300);
   outline-offset: 2px;
 }
 
-/* visually hidden label that still associates with checkbox */
+/* Visually-hidden label for a11y */
 .task-card__checkbox-label {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: 1px; height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
@@ -206,7 +198,7 @@
 .task-card__title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--mono-50);
   margin: 0;
   line-height: 1.4;
   transition: color 0.2s ease;
@@ -215,7 +207,7 @@
 /* ─── Description ────────────────────────────────────────────────────────── */
 .task-card__description {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--mono-400);
   line-height: 1.6;
   margin: 0 0 14px 28px;
   display: -webkit-box;
@@ -225,7 +217,7 @@
   overflow: hidden;
 }
 
-/* ─── Time remaining row ─────────────────────────────────────────────────── */
+/* ─── Time remaining ─────────────────────────────────────────────────────── */
 .task-card__time-row {
   display: flex;
   align-items: center;
@@ -237,22 +229,22 @@
 .task-card__clock-icon {
   display: flex;
   align-items: center;
-  color: var(--text-muted);
+  color: var(--mono-500);
 }
 
-.task-card__clock-icon.overdue {
-  color: #f87171;
-}
+.task-card__clock-icon.overdue { color: var(--mono-200); }
 
 .task-card__time-remaining {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--mono-500);
 }
 
+/* Overdue: bold white so it pops in a monochrome world */
 .task-card__time-remaining--overdue {
-  color: #f87171;
-  font-weight: 600;
+  color: var(--mono-100);
+  font-weight: 700;
+  letter-spacing: 0.1px;
 }
 
 /* ─── Tags ───────────────────────────────────────────────────────────────── */
@@ -268,18 +260,19 @@
 .task-card__tag {
   font-size: 11px;
   font-weight: 500;
-  color: var(--purple-light);
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: var(--mono-300);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--mono-600);
   padding: 2px 9px;
   border-radius: 100px;
   letter-spacing: 0.2px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .task-card__tag:hover {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--mono-400);
+  color: var(--mono-100);
 }
 
 /* ─── Footer ─────────────────────────────────────────────────────────────── */
@@ -288,7 +281,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--mono-700);
   gap: 8px;
 }
 
@@ -305,46 +298,43 @@
 }
 
 .task-card__status-dot {
-  width: 7px;
-  height: 7px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
+/* Monochrome status levels: shade-based hierarchy */
 .status-todo {
-  color: #94a3b8;
-  background: rgba(148, 163, 184, 0.08);
-  border-color: rgba(148, 163, 184, 0.2);
+  color: var(--mono-500);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--mono-700);
 }
-.dot-todo { background: #64748b; }
+.dot-todo { background: var(--mono-600); }
 
 .status-in-progress {
-  color: #60a5fa;
-  background: rgba(96, 165, 250, 0.08);
-  border-color: rgba(96, 165, 250, 0.25);
+  color: var(--mono-200);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--mono-500);
 }
 .dot-in-progress {
-  background: #60a5fa;
+  background: var(--mono-200);
   animation: blink 1.5s ease-in-out infinite;
 }
 
 .status-done {
-  color: #6ee7b7;
-  background: rgba(110, 231, 183, 0.08);
-  border-color: rgba(110, 231, 183, 0.25);
+  color: var(--mono-50);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--mono-300);
 }
-.dot-done { background: #6ee7b7; }
+.dot-done { background: var(--mono-0); }
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50%       { opacity: 0.3; }
 }
 
 /* ─── Action buttons ─────────────────────────────────────────────────────── */
-.task-card__actions {
-  display: flex;
-  gap: 6px;
-}
+.task-card__actions { display: flex; gap: 6px; }
 
 .task-card__btn {
   display: flex;
@@ -355,41 +345,37 @@
   font-family: 'Inter', system-ui, sans-serif;
   padding: 5px 11px;
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid;
   cursor: pointer;
   transition: all 0.2s ease;
   line-height: 1;
 }
 
 .task-card__btn--edit {
-  color: #94a3b8;
-  background: rgba(148, 163, 184, 0.08);
-  border-color: rgba(148, 163, 184, 0.15);
+  color: var(--mono-400);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--mono-700);
 }
-
 .task-card__btn--edit:hover {
-  color: var(--purple-light);
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.35);
+  color: var(--mono-100);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--mono-400);
 }
 
+/* Delete: slightly brighter border on hover only */
 .task-card__btn--delete {
-  color: #94a3b8;
-  background: rgba(148, 163, 184, 0.08);
-  border-color: rgba(148, 163, 184, 0.15);
+  color: var(--mono-400);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--mono-700);
 }
-
 .task-card__btn--delete:hover {
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.1);
-  border-color: rgba(248, 113, 113, 0.3);
+  color: var(--mono-50);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--mono-300);
 }
 
 .task-card__btn:focus-visible {
-  outline: 2px solid var(--purple-light);
+  outline: 2px solid var(--mono-300);
   outline-offset: 2px;
 }
-
-.task-card__btn:active {
-  transform: scale(0.96);
-}
+.task-card__btn:active { transform: scale(0.96); }

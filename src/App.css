@@ -1,12 +1,12 @@
-/* ─── App-level page styles ─────────────────────────────────────────────────── */
+/* ─── App-level page styles — Monochrome Edition ────────────────────────────── */
 
 /* ─── Main layout ────────────────────────────────────────────────────────── */
 .app-main {
   min-height: 100vh;
-  background: #0d0e18;
+  background: #0c0c0e;
   background-image:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(139, 92, 246, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 90% 80%, rgba(96, 165, 250, 0.07) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 50% at 50% -5%, rgba(255,255,255,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 85% 85%, rgba(255,255,255,0.03) 0%, transparent 50%);
   padding: 60px 20px 80px;
   display: flex;
   flex-direction: column;
@@ -27,9 +27,9 @@
   font-weight: 600;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #a78bfa;
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #3f3f46;
   padding: 4px 14px;
   border-radius: 100px;
   margin-bottom: 18px;
@@ -38,22 +38,21 @@
 .app-header__title {
   font-size: clamp(32px, 5vw, 52px);
   font-weight: 700;
-  color: #e2e8f0;
+  color: #f4f4f5;
   letter-spacing: -1px;
   margin: 0 0 12px;
   line-height: 1.1;
 }
 
+/* Accent: white instead of a color */
 .app-header__accent {
-  background: linear-gradient(135deg, #8b5cf6, #60a5fa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffffff;
+  position: relative;
 }
 
 .app-header__sub {
   font-size: 16px;
-  color: #64748b;
+  color: #52525b;
   margin: 0;
   line-height: 1.6;
 }
@@ -61,12 +60,11 @@
 /* ─── Stats bar ──────────────────────────────────────────────────────────── */
 .app-stats {
   display: flex;
-  gap: 2px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #27272a;
   border-radius: 14px;
   overflow: hidden;
-  padding: 0;
 }
 
 .app-stat {
@@ -75,35 +73,31 @@
   align-items: center;
   padding: 14px 28px;
   gap: 2px;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid #27272a;
   transition: background 0.2s ease;
 }
 
-.app-stat:last-child {
-  border-right: none;
-}
+.app-stat:last-child { border-right: none; }
 
-.app-stat:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
+.app-stat:hover { background: rgba(255, 255, 255, 0.04); }
 
 .app-stat__num {
   font-size: 22px;
   font-weight: 700;
-  color: #e2e8f0;
+  color: #f4f4f5;
   line-height: 1;
 }
 
 .app-stat__label {
   font-size: 11px;
   font-weight: 500;
-  color: #64748b;
+  color: #52525b;
   letter-spacing: 0.3px;
 }
 
-.app-stat--urgent .app-stat__num {
-  color: #f87171;
-}
+/* "Urgent" stat: same white number, just slightly brighter label */
+.app-stat--urgent .app-stat__num  { color: #ffffff; }
+.app-stat--urgent .app-stat__label { color: #71717a; }
 
 /* ─── Cards grid ─────────────────────────────────────────────────────────── */
 .app-grid {
@@ -119,19 +113,11 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 60px 20px;
-  color: #475569;
+  color: #3f3f46;
 }
 
-.app-empty__icon {
-  font-size: 40px;
-  display: block;
-  margin-bottom: 12px;
-}
-
-.app-empty p {
-  font-size: 16px;
-  font-weight: 500;
-}
+.app-empty__icon { font-size: 40px; display: block; margin-bottom: 12px; }
+.app-empty p     { font-size: 16px; font-weight: 500; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
@@ -142,15 +128,11 @@
   }
   .app-stat {
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid #27272a;
     flex-direction: row;
     justify-content: space-between;
     padding: 12px 20px;
   }
-  .app-stat:last-child {
-    border-bottom: none;
-  }
-  .app-grid {
-    grid-template-columns: 1fr;
-  }
+  .app-stat:last-child { border-bottom: none; }
+  .app-grid { grid-template-columns: 1fr; }
 }
