@@ -1,0 +1,156 @@
+/* ─── App-level page styles ─────────────────────────────────────────────────── */
+
+/* ─── Main layout ────────────────────────────────────────────────────────── */
+.app-main {
+  min-height: 100vh;
+  background: #0d0e18;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(139, 92, 246, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 90% 80%, rgba(96, 165, 250, 0.07) 0%, transparent 50%);
+  padding: 60px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+.app-header {
+  text-align: center;
+  max-width: 600px;
+}
+
+.app-header__badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 4px 14px;
+  border-radius: 100px;
+  margin-bottom: 18px;
+}
+
+.app-header__title {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: -1px;
+  margin: 0 0 12px;
+  line-height: 1.1;
+}
+
+.app-header__accent {
+  background: linear-gradient(135deg, #8b5cf6, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-header__sub {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ─── Stats bar ──────────────────────────────────────────────────────────── */
+.app-stats {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.app-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 28px;
+  gap: 2px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s ease;
+}
+
+.app-stat:last-child {
+  border-right: none;
+}
+
+.app-stat:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-stat__num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #e2e8f0;
+  line-height: 1;
+}
+
+.app-stat__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  letter-spacing: 0.3px;
+}
+
+.app-stat--urgent .app-stat__num {
+  color: #f87171;
+}
+
+/* ─── Cards grid ─────────────────────────────────────────────────────────── */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+.app-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: #475569;
+}
+
+.app-empty__icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.app-empty p {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .app-stats {
+    flex-direction: column;
+    width: 100%;
+    max-width: 260px;
+  }
+  .app-stat {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 12px 20px;
+  }
+  .app-stat:last-child {
+    border-bottom: none;
+  }
+  .app-grid {
+    grid-template-columns: 1fr;
+  }
+}
