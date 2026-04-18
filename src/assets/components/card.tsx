@@ -191,7 +191,6 @@ export function TaskCard({
 
   // Derived
   const isDone = currentStatus === "done";
-  const isCompleted = isDone;
 
   // ── Edit mode ───────────────────────────────────────────────────────────────
   const [isEditing, setIsEditing] = useState(false);
