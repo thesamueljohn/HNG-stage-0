@@ -8,7 +8,7 @@ export interface EditModalProps {
 }
 
 const PRIORITIES: Priority[] = ["low", "medium", "high", "urgent"];
-const STATUSES: Status[] = ["todo", "in-progress", "done"];
+const STATUSES: Status[] = ["pending", "in-progress", "done"];
 
 function statusLabel(s: Status) {
   return s === "in-progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1);
