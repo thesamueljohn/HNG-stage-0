@@ -1,8 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type Priority = "low" | "medium" | "high" | "urgent";
-export type Status = "todo" | "in-progress" | "done";
+export type Status = "pending" | "in-progress" | "done";
 
 export interface TaskCardProps {
   id: string;
@@ -12,10 +19,12 @@ export interface TaskCardProps {
   dueDate: Date;
   status: Status;
   tags: string[];
-  onEdit?: (id: string) => void;
+  onUpdate?: (id: string, patch: Partial<Omit<TaskCardProps, "onUpdate" | "onDelete">>) => void;
   onDelete?: (id: string) => void;
-  onToggleComplete?: (id: string, completed: boolean) => void;
 }
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const COLLAPSE_THRESHOLD = 120; // chars — collapse if description is longer
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,10 +37,10 @@ function formatDueDate(date: Date): string {
   })}`;
 }
 
-/** Calculate a human-friendly time-remaining string accurate to seconds */
+/** Calculate a human-friendly time-remaining string */
 function formatTimeRemaining(date: Date): { label: string; isOverdue: boolean } {
   const now = Date.now();
-  const diff = date.getTime() - now; // ms
+  const diff = date.getTime() - now;
   const absDiff = Math.abs(diff);
 
   const totalSeconds = Math.floor(absDiff / 1000);
@@ -56,25 +65,33 @@ function formatTimeRemaining(date: Date): { label: string; isOverdue: boolean } 
   return { label: `Due in ${unit}`, isOverdue: false };
 }
 
+/** Format a Date for <input type="date"> → YYYY-MM-DD */
+function toDateInputValue(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
+
 // ─── Priority config ──────────────────────────────────────────────────────────
-const priorityConfig: Record<Priority, { label: string; className: string }> = {
-  low: { label: "Low", className: "priority-low" },
-  medium: { label: "Medium", className: "priority-medium" },
-  high: { label: "High", className: "priority-high" },
-  urgent: { label: "Urgent", className: "priority-urgent" },
+const priorityConfig: Record<Priority, { label: string; badgeClass: string; indicatorClass: string }> = {
+  low:    { label: "Low",    badgeClass: "priority-low",    indicatorClass: "pi-low" },
+  medium: { label: "Medium", badgeClass: "priority-medium", indicatorClass: "pi-medium" },
+  high:   { label: "High",   badgeClass: "priority-high",   indicatorClass: "pi-high" },
+  urgent: { label: "Urgent", badgeClass: "priority-urgent", indicatorClass: "pi-urgent" },
 };
 
 // ─── Status config ────────────────────────────────────────────────────────────
-const statusConfig: Record<Status, { label: string; className: string; dot: string }> = {
-  todo: { label: "To Do", className: "status-todo", dot: "dot-todo" },
-  "in-progress": { label: "In Progress", className: "status-in-progress", dot: "dot-in-progress" },
-  done: { label: "Done", className: "status-done", dot: "dot-done" },
+const statusConfig: Record<Status, { label: string; badgeClass: string; dotClass: string }> = {
+  pending:     { label: "Pending",     badgeClass: "status-todo",        dotClass: "dot-todo" },
+  "in-progress": { label: "In Progress", badgeClass: "status-in-progress", dotClass: "dot-in-progress" },
+  done:        { label: "Done",        badgeClass: "status-done",        dotClass: "dot-done" },
 };
+
+const ALL_STATUSES: Status[] = ["pending", "in-progress", "done"];
+const ALL_PRIORITIES: Priority[] = ["low", "medium", "high", "urgent"];
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 function EditIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
@@ -83,7 +100,7 @@ function EditIcon() {
 
 function DeleteIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
       <path d="M10 11v6M14 11v6" />
@@ -112,6 +129,32 @@ function ClockIcon() {
   );
 }
 
+function ChevronDownIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function ChevronUpIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="18 15 12 9 6 15" />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export function TaskCard({
   id,
@@ -121,159 +164,444 @@ export function TaskCard({
   dueDate,
   status,
   tags,
-  onEdit,
+  onUpdate,
   onDelete,
-  onToggleComplete,
 }: TaskCardProps) {
-  const [completed, setCompleted] = useState(status === "done");
-  const [timeRemaining, setTimeRemaining] = useState(() => formatTimeRemaining(dueDate));
+  // ── Core state ──────────────────────────────────────────────────────────────
+  const [currentStatus, setCurrentStatus] = useState<Status>(status);
+  const [currentPriority, setCurrentPriority] = useState<Priority>(priority);
+  const [currentTitle, setCurrentTitle] = useState(title);
+  const [currentDescription, setCurrentDescription] = useState(description);
+  const [currentDueDate, setCurrentDueDate] = useState(dueDate);
+  const [currentTags] = useState(tags);
 
-  // Tick every 30 seconds to refresh relative time
+  // Derived
+  const isDone = currentStatus === "done";
+  const isCompleted = isDone;
+
+  // ── Edit mode ───────────────────────────────────────────────────────────────
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState({
+    title: currentTitle,
+    description: currentDescription,
+    priority: currentPriority,
+    dueDate: toDateInputValue(currentDueDate),
+  });
+  const editButtonRef = useRef<HTMLButtonElement>(null);
+  const firstEditInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Expand / Collapse ────────────────────────────────────────────────────────
+  const isLongDesc = description.length > COLLAPSE_THRESHOLD;
+  const [expanded, setExpanded] = useState(!isLongDesc);
+
+  // ── Time remaining ───────────────────────────────────────────────────────────
+  const [timeInfo, setTimeInfo] = useState(() => formatTimeRemaining(currentDueDate));
+
   useEffect(() => {
-    const tick = () => setTimeRemaining(formatTimeRemaining(dueDate));
-    tick(); // immediate
-    const id = setInterval(tick, 30_000);
-    return () => clearInterval(id);
-  }, [dueDate]);
+    if (isDone) return; // freeze timer when done
+    const tick = () => setTimeInfo(formatTimeRemaining(currentDueDate));
+    tick();
+    const intervalId = setInterval(tick, 30_000);
+    return () => clearInterval(intervalId);
+  }, [currentDueDate, isDone]);
 
-  const handleCheck = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const checked = e.target.checked;
-      setCompleted(checked);
-      onToggleComplete?.(id, checked);
+  // ── Edit handlers ────────────────────────────────────────────────────────────
+  const openEdit = useCallback(() => {
+    setEditDraft({
+      title: currentTitle,
+      description: currentDescription,
+      priority: currentPriority,
+      dueDate: toDateInputValue(currentDueDate),
+    });
+    setIsEditing(true);
+  }, [currentTitle, currentDescription, currentPriority, currentDueDate]);
+
+  useEffect(() => {
+    if (isEditing) firstEditInputRef.current?.focus();
+  }, [isEditing]);
+
+  const cancelEdit = useCallback(() => {
+    setIsEditing(false);
+    // Return focus to Edit button
+    requestAnimationFrame(() => editButtonRef.current?.focus());
+  }, []);
+
+  const saveEdit = useCallback(
+    (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const newTitle = editDraft.title.trim() || currentTitle;
+      const newDesc = editDraft.description;
+      const newPriority = editDraft.priority;
+      const newDueDate = editDraft.dueDate ? new Date(editDraft.dueDate) : currentDueDate;
+
+      setCurrentTitle(newTitle);
+      setCurrentDescription(newDesc);
+      setCurrentPriority(newPriority);
+      setCurrentDueDate(newDueDate);
+
+      onUpdate?.(id, {
+        title: newTitle,
+        description: newDesc,
+        priority: newPriority,
+        dueDate: newDueDate,
+        status: currentStatus,
+        tags: currentTags,
+      });
+
+      setIsEditing(false);
+      requestAnimationFrame(() => editButtonRef.current?.focus());
     },
-    [id, onToggleComplete]
+    [editDraft, currentTitle, currentDueDate, currentStatus, currentTags, id, onUpdate]
   );
 
-  const pCfg = priorityConfig[priority];
-  const sCfg = statusConfig[completed ? "done" : status];
-  const checkboxId = `task-checkbox-${id}`;
-  const dueDateISO = dueDate.toISOString().split("T")[0];
+  // ── Checkbox / Status sync ───────────────────────────────────────────────────
+  const handleCheckboxChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const checked = e.target.checked;
+      const newStatus: Status = checked ? "done" : "pending";
+      setCurrentStatus(newStatus);
+      onUpdate?.(id, { status: newStatus });
+    },
+    [id, onUpdate]
+  );
 
+  const handleStatusChange = useCallback(
+    (e: ChangeEvent<HTMLSelectElement>) => {
+      const newStatus = e.target.value as Status;
+      setCurrentStatus(newStatus);
+      onUpdate?.(id, { status: newStatus });
+    },
+    [id, onUpdate]
+  );
+
+  // ── Computed values ──────────────────────────────────────────────────────────
+  const pCfg = priorityConfig[currentPriority];
+  const sCfg = statusConfig[currentStatus];
+  const checkboxId = `task-checkbox-${id}`;
+  const dueDateISO = currentDueDate.toISOString().split("T")[0];
+
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <article
       data-testid="test-todo-card"
-      className={`task-card${completed ? " task-card--completed" : ""}`}
-      aria-label={`Task: ${title}`}
+      className={[
+        "task-card",
+        isCompleted ? "task-card--done" : "",
+        timeInfo.isOverdue && !isDone ? "task-card--overdue" : "",
+        `task-card--priority-${currentPriority}`,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label={`Task: ${currentTitle}`}
     >
-      {/* ── Top row: due date + priority ── */}
-      <div className="task-card__header">
-        <div className="task-card__date-group">
-          <span className="task-card__date-icon">
-            <CalendarIcon />
-          </span>
-          <time
-            data-testid="test-todo-due-date"
-            dateTime={dueDateISO}
-            className="task-card__due-date"
-          >
-            {formatDueDate(dueDate)}
-          </time>
-        </div>
+      {/* ── Priority accent bar (indicator) ─── */}
+      <span
+        data-testid="test-todo-priority-indicator"
+        className={`task-card__priority-indicator ${pCfg.indicatorClass}`}
+        aria-hidden="true"
+      />
 
-        <span
-          data-testid="test-todo-priority"
-          className={`task-card__priority-badge ${pCfg.className}`}
-          aria-label={`Priority: ${pCfg.label}`}
+      {/* ═══════════════ EDIT FORM ═══════════════ */}
+      {isEditing ? (
+        <form
+          data-testid="test-todo-edit-form"
+          className="task-card__edit-form"
+          onSubmit={saveEdit}
+          noValidate
+          aria-label={`Edit task: ${currentTitle}`}
         >
-          {pCfg.label}
-        </span>
-      </div>
+          <div className="edit-form__field">
+            <label htmlFor={`edit-title-${id}`} className="edit-form__label">
+              Title
+            </label>
+            <input
+              ref={firstEditInputRef}
+              id={`edit-title-${id}`}
+              data-testid="test-todo-edit-title-input"
+              type="text"
+              className="edit-form__input"
+              value={editDraft.title}
+              onChange={(e) =>
+                setEditDraft((d) => ({ ...d, title: e.target.value }))
+              }
+              required
+              maxLength={100}
+              placeholder="Task title…"
+            />
+          </div>
 
-      {/* ── Title row with checkbox ── */}
-      <div className="task-card__title-row">
-        <input
-          id={checkboxId}
-          type="checkbox"
-          data-testid="test-todo-complete-toggle"
-          className="task-card__checkbox"
-          checked={completed}
-          onChange={handleCheck}
-          aria-label={`Mark "${title}" as ${completed ? "incomplete" : "complete"}`}
-        />
-        <label htmlFor={checkboxId} className="task-card__checkbox-label" />
+          <div className="edit-form__field">
+            <label htmlFor={`edit-desc-${id}`} className="edit-form__label">
+              Description
+            </label>
+            <textarea
+              id={`edit-desc-${id}`}
+              data-testid="test-todo-edit-description-input"
+              className="edit-form__textarea"
+              value={editDraft.description}
+              onChange={(e) =>
+                setEditDraft((d) => ({ ...d, description: e.target.value }))
+              }
+              rows={3}
+              maxLength={500}
+              placeholder="What needs to be done?"
+            />
+          </div>
 
-        <h2 data-testid="test-todo-title" className="task-card__title">
-          {title}
-        </h2>
-      </div>
+          <div className="edit-form__row">
+            <div className="edit-form__field">
+              <label htmlFor={`edit-priority-${id}`} className="edit-form__label">
+                Priority
+              </label>
+              <select
+                id={`edit-priority-${id}`}
+                data-testid="test-todo-edit-priority-select"
+                className="edit-form__select"
+                value={editDraft.priority}
+                onChange={(e) =>
+                  setEditDraft((d) => ({
+                    ...d,
+                    priority: e.target.value as Priority,
+                  }))
+                }
+              >
+                {ALL_PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      {/* ── Description ── */}
-      <p data-testid="test-todo-description" className="task-card__description">
-        {description}
-      </p>
+            <div className="edit-form__field">
+              <label htmlFor={`edit-due-${id}`} className="edit-form__label">
+                Due Date
+              </label>
+              <input
+                id={`edit-due-${id}`}
+                data-testid="test-todo-edit-due-date-input"
+                type="date"
+                className="edit-form__input"
+                value={editDraft.dueDate}
+                onChange={(e) =>
+                  setEditDraft((d) => ({ ...d, dueDate: e.target.value }))
+                }
+              />
+            </div>
+          </div>
 
-      {/* ── Time remaining ── */}
-      <div className="task-card__time-row">
-        <span className={`task-card__clock-icon ${timeRemaining.isOverdue ? "overdue" : ""}`}>
-          <ClockIcon />
-        </span>
-        <time
-          data-testid="test-todo-time-remaining"
-          dateTime={dueDateISO}
-          className={`task-card__time-remaining ${timeRemaining.isOverdue ? "task-card__time-remaining--overdue" : ""}`}
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {timeRemaining.label}
-        </time>
-      </div>
+          <div className="edit-form__actions">
+            <button
+              type="button"
+              data-testid="test-todo-cancel-button"
+              className="edit-form__btn edit-form__btn--cancel"
+              onClick={cancelEdit}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              data-testid="test-todo-save-button"
+              className="edit-form__btn edit-form__btn--save"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      ) : (
+        /* ═══════════════ VIEW MODE ═══════════════ */
+        <>
+          {/* ── Header: due date + priority badge ── */}
+          <div className="task-card__header">
+            <div className="task-card__date-group">
+              <span className="task-card__date-icon">
+                <CalendarIcon />
+              </span>
+              <time
+                data-testid="test-todo-due-date"
+                dateTime={dueDateISO}
+                className="task-card__due-date"
+              >
+                {formatDueDate(currentDueDate)}
+              </time>
+            </div>
 
-      {/* ── Tags ── */}
-      <ul
-        data-testid="test-todo-tags"
-        className="task-card__tags"
-        role="list"
-        aria-label="Task categories"
-      >
-        {tags.map((tag) => (
-          <li
-            key={tag}
-            data-testid={`test-todo-tag-${tag.toLowerCase().replace(/\s+/g, "-")}`}
-            className="task-card__tag"
-            role="listitem"
+            <span
+              data-testid="test-todo-priority"
+              className={`task-card__priority-badge ${pCfg.badgeClass}`}
+              aria-label={`Priority: ${pCfg.label}`}
+            >
+              {pCfg.label}
+            </span>
+          </div>
+
+          {/* ── Title row with checkbox ── */}
+          <div className="task-card__title-row">
+            <input
+              id={checkboxId}
+              type="checkbox"
+              data-testid="test-todo-complete-toggle"
+              className="task-card__checkbox"
+              checked={isDone}
+              onChange={handleCheckboxChange}
+              aria-label={`Mark "${currentTitle}" as ${isDone ? "incomplete" : "complete"}`}
+            />
+            <label htmlFor={checkboxId} className="task-card__checkbox-label" />
+
+            <h2
+              data-testid="test-todo-title"
+              className="task-card__title"
+            >
+              {currentTitle}
+            </h2>
+          </div>
+
+          {/* ── Description (collapsible) ── */}
+          <div
+            data-testid="test-todo-collapsible-section"
+            className={`task-card__collapsible ${expanded ? "is-expanded" : "is-collapsed"}`}
+            id={`collapsible-${id}`}
           >
-            {tag}
-          </li>
-        ))}
-      </ul>
+            <p
+              data-testid="test-todo-description"
+              className="task-card__description"
+            >
+              {currentDescription}
+            </p>
+          </div>
 
-      {/* ── Footer: status + actions ── */}
-      <div className="task-card__footer">
-        <span
-          data-testid="test-todo-status"
-          className={`task-card__status ${sCfg.className}`}
-          role="status"
-          aria-label={`Status: ${sCfg.label}`}
-        >
-          <span className={`task-card__status-dot ${sCfg.dot}`} aria-hidden="true" />
-          {sCfg.label}
-        </span>
+          {isLongDesc && (
+            <button
+              data-testid="test-todo-expand-toggle"
+              className="task-card__expand-toggle"
+              onClick={() => setExpanded((e) => !e)}
+              aria-expanded={expanded}
+              aria-controls={`collapsible-${id}`}
+            >
+              {expanded ? (
+                <>
+                  <ChevronUpIcon /> Show less
+                </>
+              ) : (
+                <>
+                  <ChevronDownIcon /> Show more
+                </>
+              )}
+            </button>
+          )}
 
-        <div className="task-card__actions">
-          <button
-            data-testid="test-todo-edit-button"
-            className="task-card__btn task-card__btn--edit"
-            onClick={() => onEdit?.(id)}
-            aria-label={`Edit task: ${title}`}
-            title="Edit task"
+          {/* ── Time remaining + overdue indicator ── */}
+          <div className="task-card__time-row">
+            <span
+              className={`task-card__clock-icon ${timeInfo.isOverdue && !isDone ? "overdue" : ""}`}
+            >
+              <ClockIcon />
+            </span>
+            <time
+              data-testid="test-todo-time-remaining"
+              dateTime={dueDateISO}
+              className={`task-card__time-remaining ${
+                isDone
+                  ? "task-card__time-remaining--done"
+                  : timeInfo.isOverdue
+                  ? "task-card__time-remaining--overdue"
+                  : ""
+              }`}
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {isDone ? "Completed" : timeInfo.label}
+            </time>
+
+            {timeInfo.isOverdue && !isDone && (
+              <span
+                data-testid="test-todo-overdue-indicator"
+                className="task-card__overdue-badge"
+                role="status"
+                aria-label="This task is overdue"
+              >
+                <AlertIcon />
+                Overdue
+              </span>
+            )}
+          </div>
+
+          {/* ── Tags ── */}
+          <ul
+            data-testid="test-todo-tags"
+            className="task-card__tags"
+            role="list"
+            aria-label="Task categories"
           >
-            <EditIcon />
-            <span>Edit</span>
-          </button>
+            {currentTags.map((tag) => (
+              <li
+                key={tag}
+                data-testid={`test-todo-tag-${tag.toLowerCase().replace(/\s+/g, "-")}`}
+                className="task-card__tag"
+                role="listitem"
+              >
+                {tag}
+              </li>
+            ))}
+          </ul>
 
-          <button
-            data-testid="test-todo-delete-button"
-            className="task-card__btn task-card__btn--delete"
-            onClick={() => onDelete?.(id)}
-            aria-label={`Delete task: ${title}`}
-            title="Delete task"
-          >
-            <DeleteIcon />
-            <span>Delete</span>
-          </button>
-        </div>
-      </div>
+          {/* ── Footer: status control + actions ── */}
+          <div className="task-card__footer">
+            {/* Status display badge */}
+            <span
+              data-testid="test-todo-status"
+              className={`task-card__status ${sCfg.badgeClass}`}
+              role="status"
+              aria-label={`Status: ${sCfg.label}`}
+            >
+              <span className={`task-card__status-dot ${sCfg.dotClass}`} aria-hidden="true" />
+              {sCfg.label}
+            </span>
+
+            <div className="task-card__actions">
+              {/* Status control dropdown */}
+              <select
+                data-testid="test-todo-status-control"
+                className="task-card__status-select"
+                value={currentStatus}
+                onChange={handleStatusChange}
+                aria-label="Change task status"
+              >
+                {ALL_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {statusConfig[s].label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Edit button */}
+              <button
+                ref={editButtonRef}
+                data-testid="test-todo-edit-button"
+                className="task-card__btn task-card__btn--edit"
+                onClick={openEdit}
+                aria-label={`Edit task: ${currentTitle}`}
+                title="Edit task"
+              >
+                <EditIcon />
+                <span>Edit</span>
+              </button>
+
+              {/* Delete button */}
+              <button
+                data-testid="test-todo-delete-button"
+                className="task-card__btn task-card__btn--delete"
+                onClick={() => onDelete?.(id)}
+                aria-label={`Delete task: ${currentTitle}`}
+                title="Delete task"
+              >
+                <DeleteIcon />
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </article>
   );
 }
