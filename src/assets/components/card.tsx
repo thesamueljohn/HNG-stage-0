@@ -70,13 +70,27 @@ function toDateInputValue(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
-// ─── Priority config ──────────────────────────────────────────────────────────
-const priorityConfig: Record<Priority, { label: string; badgeClass: string; indicatorClass: string }> = {
-  low:    { label: "Low",    badgeClass: "priority-low",    indicatorClass: "pi-low" },
-  medium: { label: "Medium", badgeClass: "priority-medium", indicatorClass: "pi-medium" },
-  high:   { label: "High",   badgeClass: "priority-high",   indicatorClass: "pi-high" },
-  urgent: { label: "Urgent", badgeClass: "priority-urgent", indicatorClass: "pi-urgent" },
+// ─── Priority config (badge only — no indicator colour) ─────────────────────
+const priorityConfig: Record<Priority, { label: string; badgeClass: string }> = {
+  low:    { label: "Low",    badgeClass: "priority-low"    },
+  medium: { label: "Medium", badgeClass: "priority-medium" },
+  high:   { label: "High",   badgeClass: "priority-high"   },
+  urgent: { label: "Urgent", badgeClass: "priority-urgent" },
 };
+
+// ─── Urgency classification ─────────────────────────────────────────────────
+/** Classify deadline urgency; drives the left-border indicator + card tint. */
+type Urgency = "overdue" | "critical" | "soon" | "approaching" | "normal" | "done";
+
+function getUrgency(dueDate: Date, status: Status): Urgency {
+  if (status === "done") return "done";
+  const msLeft = dueDate.getTime() - Date.now();
+  if (msLeft < 0)                    return "overdue";      // past due
+  if (msLeft < 6 * 60 * 60 * 1000)  return "critical";     // < 6 h
+  if (msLeft < 24 * 60 * 60 * 1000) return "soon";         // < 24 h
+  if (msLeft < 3 * 24 * 60 * 60 * 1000) return "approaching"; // < 3 days
+  return "normal";                                          // far deadline
+}
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const statusConfig: Record<Status, { label: string; badgeClass: string; dotClass: string }> = {
@@ -279,6 +293,7 @@ export function TaskCard({
   const sCfg = statusConfig[currentStatus];
   const checkboxId = `task-checkbox-${id}`;
   const dueDateISO = currentDueDate.toISOString().split("T")[0];
+  const urgency = getUrgency(currentDueDate, currentStatus);
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
@@ -286,18 +301,16 @@ export function TaskCard({
       data-testid="test-todo-card"
       className={[
         "task-card",
-        isCompleted ? "task-card--done" : "",
-        timeInfo.isOverdue && !isDone ? "task-card--overdue" : "",
-        `task-card--priority-${currentPriority}`,
+        `task-card--urg-${urgency}`,
       ]
         .filter(Boolean)
         .join(" ")}
       aria-label={`Task: ${currentTitle}`}
     >
-      {/* ── Priority accent bar (indicator) ─── */}
+      {/* ── Urgency accent bar (left-border indicator) ─── */}
       <span
         data-testid="test-todo-priority-indicator"
-        className={`task-card__priority-indicator ${pCfg.indicatorClass}`}
+        className={`task-card__priority-indicator urg-bar-${urgency}`}
         aria-hidden="true"
       />
 

@@ -4,7 +4,7 @@ import "./assets/components/card.css";
 import "./App.css";
 
 // ─── Storage key ───────────────────────────────────────────────────────────────
-const LS_KEY = "hng-tasks-v2";
+const LS_KEY = "hng-tasks-v3";
 
 // ─── Sample / seed data ────────────────────────────────────────────────────────
 const now = new Date();
@@ -25,44 +25,70 @@ type TaskData = Omit<TaskCardProps, "onUpdate" | "onDelete">;
 
 const SEED_TASKS: TaskData[] = [
   {
+    // urgency: overdue — red
     id: "task-1",
-    title: "Empty T33 folders",
-    description:
-      "Clear out all the old files and temporary folders on the production server before the nightly backup window kicks in. Make sure to verify checksums after deletion and notify the DevOps team.",
-    priority: "high",
-    dueDate: daysFromNow(3),
-    status: "pending",
-    tags: ["DevOps", "Server", "Maintenance"],
-  },
-  {
-    id: "task-2",
     title: "Design system tokens review",
     description:
       "Audit the existing colour palette, typography scale, and spacing system. Align with the new brand guidelines released last week and document any breaking changes that affect downstream components.",
     priority: "medium",
-    dueDate: hoursFromNow(-2),
+    dueDate: hoursFromNow(-3),   // 3 hours overdue
     status: "in-progress",
     tags: ["Design", "UI", "Brand"],
   },
   {
+    // urgency: critical — orange (< 6 h)
+    id: "task-2",
+    title: "Critical security patch deploy",
+    description:
+      "Apply CVE-2026-1337 patch across all nodes. Requires a coordinated rolling restart — coordinate with SRE on-call. Patch window is narrow, do not miss the maintenance window.",
+    priority: "urgent",
+    dueDate: hoursFromNow(4),    // 4 hours left
+    status: "in-progress",
+    tags: ["Security", "DevOps", "Critical"],
+  },
+  {
+    // urgency: soon — amber (< 24 h)
     id: "task-3",
+    title: "Finalise release notes",
+    description:
+      "Write up the changelog for v2.4.0 and get sign-off from the PM before the release tag is pushed tonight.",
+    priority: "high",
+    dueDate: hoursFromNow(10),   // 10 hours left
+    status: "pending",
+    tags: ["Release", "Docs"],
+  },
+  {
+    // urgency: approaching — blue (< 3 days)
+    id: "task-4",
+    title: "Empty T33 folders",
+    description:
+      "Clear out all the old files and temporary folders on the production server before the nightly backup window kicks in. Verify checksums after deletion and notify the DevOps team.",
+    priority: "high",
+    dueDate: daysFromNow(2),     // 2 days left
+    status: "pending",
+    tags: ["DevOps", "Server", "Maintenance"],
+  },
+  {
+    // urgency: normal — no tint (far deadline)
+    id: "task-5",
+    title: "Plan Q3 roadmap session",
+    description:
+      "Schedule a cross-functional meeting to align on the Q3 product priorities. Prepare a draft agenda and share a pre-read doc one week in advance.",
+    priority: "low",
+    dueDate: daysFromNow(14),    // 2 weeks away
+    status: "pending",
+    tags: ["Strategy", "Planning"],
+  },
+  {
+    // urgency: done — faded, no accent
+    id: "task-6",
     title: "Write Q2 sprint retrospective",
     description:
       "Summarise wins, blockers, and action items from this sprint cycle. Share the doc with the team by EOD.",
     priority: "low",
-    dueDate: daysFromNow(1),
+    dueDate: daysFromNow(-1),    // was due yesterday but done
     status: "done",
     tags: ["Management", "Docs"],
-  },
-  {
-    id: "task-4",
-    title: "Critical security patch deploy",
-    description:
-      "Apply CVE-2026-1337 patch across all nodes. Requires a coordinated rolling restart — coordinate with SRE on-call. Patch window is narrow so do not miss the maintenance window.",
-    priority: "urgent",
-    dueDate: hoursFromNow(5),
-    status: "in-progress",
-    tags: ["Security", "DevOps", "Critical"],
   },
 ];
 
